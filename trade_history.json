@@ -199,9 +199,18 @@
       "recs_summary": []
     },
     {
-      "cycle": 22,
-      "ts": "2026-03-08T17:45:59.163942+00:00",
-      "balance": 50.0,
+      "cycle": 23,
+      "ts": "2026-03-08T19:27:48.187138+00:00",
+      "balance": 26.64403,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 24,
+      "ts": "2026-03-08T20:04:58.910066+00:00",
+      "balance": 26.64403,
       "recs_count": 0,
       "executed_count": 0,
       "skipped_count": 0,
@@ -209,5 +218,6 @@
     }
   ],
   "trades": [],
-  "total_cycles": 23
+  "total_cycles": 24,
+  "starting_balance": 26.64403
 }

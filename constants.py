@@ -35,9 +35,9 @@ MIN_EV = 0.08      # minimum |p_hat - p| to open a trade (8pp edge)
 # for markets with days_to_expiry < 1 (near-resolution / very short-dated).
 KELLY_FRACTION       = 0.25
 MAX_TRADE_FRACTION   = 0.25
-MIN_TRADE_AMOUNT     = 2.00
-MIN_BALANCE_TO_TRADE   = 10.00
-EMERGENCY_STOP_BALANCE =  5.00
+MIN_TRADE_AMOUNT        = 2.00   # Polymarket absolute floor (never scale this)
+EMERGENCY_STOP_FRACTION = 0.02   # halt all trading if balance < 2% of starting balance
+MIN_BALANCE_FRACTION    = 0.005  # skip new buys if balance < 0.5% of starting balance
 MAX_OPEN_POSITIONS   = 5
 
 # ---------------------------------------------------------------------------

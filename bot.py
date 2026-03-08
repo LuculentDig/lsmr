@@ -41,8 +41,8 @@ from polymarket_sdk.api import (
 from polymarket_sdk.telegram import send_telegram, escape_md
 from constants import (
     CYCLE_INTERVAL_HOURS,
-    MIN_BALANCE_TO_TRADE,
-    EMERGENCY_STOP_BALANCE,
+    EMERGENCY_STOP_FRACTION,
+    MIN_BALANCE_FRACTION,
     MAX_OPEN_POSITIONS,
     MIN_EV,
     KELLY_FRACTION,
@@ -358,7 +358,7 @@ def _fmt_cycle_msg(cycle: int, balance: float, positions: list,
 # Main cycle
 # ---------------------------------------------------------------------------
 
-def run_cycle(state: TradeState, cycle_num: int) -> None:
+def run_cycle(state: TradeState, cycle_num: int, starting_balance: float) -> None:
     print(f"\n{'='*60}")
     print(f"Cycle #{cycle_num}  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
     if DRY_RUN:
@@ -373,11 +373,15 @@ def run_cycle(state: TradeState, cycle_num: int) -> None:
     exits = _check_exits(positions)
 
     # 3. New trade analysis
+    emergency_stop   = max(starting_balance * EMERGENCY_STOP_FRACTION, MIN_TRADE_AMOUNT)
+    min_bal_to_trade = max(starting_balance * MIN_BALANCE_FRACTION, MIN_TRADE_AMOUNT * 2)
+
     new_trades: list = []
-    if balance < EMERGENCY_STOP_BALANCE:
-        print(f"  EMERGENCY STOP: balance ${balance:.2f} < ${EMERGENCY_STOP_BALANCE}")
-    elif balance < MIN_BALANCE_TO_TRADE:
-        print(f"  Low balance ${balance:.2f} — skipping new buys")
+    if balance < emergency_stop:
+        print(f"  EMERGENCY STOP: balance ${balance:.2f} < ${emergency_stop:.2f} "
+              f"({EMERGENCY_STOP_FRACTION*100:.0f}% of ${starting_balance:.2f})")
+    elif balance < min_bal_to_trade:
+        print(f"  Low balance ${balance:.2f} < ${min_bal_to_trade:.2f} — skipping new buys")
     elif len(positions) >= MAX_OPEN_POSITIONS:
         print(f"  Max positions reached ({len(positions)}/{MAX_OPEN_POSITIONS})")
     else:
@@ -426,9 +430,23 @@ def main():
     cycle_num = state.get_cycle_count() + 1
     interval  = CYCLE_INTERVAL_HOURS * 3600
 
+    # Record starting balance on first-ever run; reuse it on restarts so that
+    # the emergency-stop and min-balance thresholds don't shrink after losses.
+    starting_balance = state.get_starting_balance()
+    if starting_balance is None:
+        starting_balance = get_balance()
+        state.set_starting_balance(starting_balance)
+        print(f"  Starting balance recorded: ${starting_balance:.2f}")
+    else:
+        print(f"  Starting balance (from state): ${starting_balance:.2f}")
+
+    emergency_stop   = max(starting_balance * EMERGENCY_STOP_FRACTION, MIN_TRADE_AMOUNT)
+    min_bal_to_trade = max(starting_balance * MIN_BALANCE_FRACTION, MIN_TRADE_AMOUNT * 2)
+
     print(f"LSMR + Bayesian Polymarket Bot starting")
     print(f"  Cycle interval: {CYCLE_INTERVAL_HOURS}h  |  MIN_EV: {MIN_EV}")
     print(f"  Kelly fraction: {KELLY_FRACTION}  |  Max positions: {MAX_OPEN_POSITIONS}")
+    print(f"  Emergency stop: ${emergency_stop:.2f}  |  Min to trade: ${min_bal_to_trade:.2f}")
     print(f"  DRY_RUN: {DRY_RUN}")
 
     send_telegram(
@@ -439,7 +457,7 @@ def main():
 
     while True:
         try:
-            run_cycle(state, cycle_num)
+            run_cycle(state, cycle_num, starting_balance)
         except KeyboardInterrupt:
             print("\nStopped by user.")
             sys.exit(0)

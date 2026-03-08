@@ -100,6 +100,13 @@ class TradeState:
                 break
         self._save()
 
+    def get_starting_balance(self) -> float | None:
+        return self._data.get("starting_balance")
+
+    def set_starting_balance(self, balance: float) -> None:
+        self._data["starting_balance"] = balance
+        self._save()
+
     def get_cycle_count(self) -> int:
         return self._data.get("total_cycles", len(self._data.get("cycles", [])))
 
