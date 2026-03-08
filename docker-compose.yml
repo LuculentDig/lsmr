@@ -1,0 +1,45 @@
+# ────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml  — LSMR + Bayesian Polymarket bot
+#
+# Self-contained setup with its own VPN — no longer depends on the
+# polymarket project's containers.
+#
+# Usage:
+#   docker compose up --build -d
+#   docker compose logs -f bot
+#   docker compose down
+# ────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ── 1. VPN sidecar (gluetun + NordVPN OpenVPN) ──────────────────────────
+  nordvpn:
+    image: qmcgaw/gluetun:latest
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - .env
+    environment:
+      VPN_SERVICE_PROVIDER: nordvpn
+      VPN_TYPE: openvpn
+      OPENVPN_USER: ${NORDVPN_USERNAME}
+      OPENVPN_PASSWORD: ${NORDVPN_PASSWORD}
+      OPENVPN_PROTOCOL: tcp
+      SERVER_CITIES: Vancouver
+    restart: unless-stopped
+
+  # ── 2. Bot ───────────────────────────────────────────────────────────────
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: "service:nordvpn"
+    depends_on:
+      - nordvpn
+    env_file:
+      - .env
+    environment:
+      CYCLE_INTERVAL_HOURS: ${CYCLE_INTERVAL_HOURS:-2}
+      DRY_RUN: ${DRY_RUN:-0}
+    volumes:
+      - ./trade_history.json:/app/trade_history.json
+    restart: unless-stopped

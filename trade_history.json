@@ -1,0 +1,213 @@
+{
+  "cycles": [
+    {
+      "cycle": 0,
+      "ts": "2026-03-08T04:27:52.882495+00:00",
+      "balance": 50.0,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 1,
+      "ts": "2026-03-08T04:28:20.922494+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 3,
+      "ts": "2026-03-08T04:29:41.931939+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 4,
+      "ts": "2026-03-08T04:30:57.964288+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 5,
+      "ts": "2026-03-08T04:32:38.234208+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 6,
+      "ts": "2026-03-08T04:34:11.200856+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 6,
+      "ts": "2026-03-08T04:35:04.162763+00:00",
+      "balance": 50.0,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 8,
+      "ts": "2026-03-08T06:13:02.376178+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 9,
+      "ts": "2026-03-08T06:13:29.421114+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 10,
+      "ts": "2026-03-08T07:13:33.174792+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 11,
+      "ts": "2026-03-08T08:13:37.316765+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 12,
+      "ts": "2026-03-08T09:09:14.520665+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 13,
+      "ts": "2026-03-08T10:09:17.891728+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 14,
+      "ts": "2026-03-08T11:09:21.176555+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 15,
+      "ts": "2026-03-08T12:09:24.166746+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 16,
+      "ts": "2026-03-08T13:09:27.101417+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 17,
+      "ts": "2026-03-08T14:09:30.740589+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 18,
+      "ts": "2026-03-08T15:09:33.415825+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 19,
+      "ts": "2026-03-08T16:09:37.074858+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 20,
+      "ts": "2026-03-08T17:09:42.664372+00:00",
+      "balance": 26.10164,
+      "recs_count": 0,
+      "executed_count": 1,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 21,
+      "ts": "2026-03-08T17:22:53.279620+00:00",
+      "balance": 0.0,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 22,
+      "ts": "2026-03-08T17:27:44.481781+00:00",
+      "balance": 26.64403,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    },
+    {
+      "cycle": 22,
+      "ts": "2026-03-08T17:45:59.163942+00:00",
+      "balance": 50.0,
+      "recs_count": 0,
+      "executed_count": 0,
+      "skipped_count": 0,
+      "recs_summary": []
+    }
+  ],
+  "trades": [],
+  "total_cycles": 23
+}

@@ -1,0 +1,34 @@
+# Polymarket SDK: example docker-compose for a VPN-protected bot
+# Copy this file into a new project and adjust the "bot" service as needed.
+
+services:
+  nordvpn:
+    image: qmcgaw/gluetun:latest
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - .env
+    environment:
+      VPN_SERVICE_PROVIDER: nordvpn
+      VPN_TYPE: openvpn
+      OPENVPN_USER: ${NORDVPN_USERNAME}
+      OPENVPN_PASSWORD: ${NORDVPN_PASSWORD}
+      OPENVPN_PROTOCOL: tcp
+      SERVER_CITIES: Vancouver
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: "service:nordvpn"
+    depends_on:
+      - nordvpn
+    env_file:
+      - .env
+    environment:
+      CYCLE_INTERVAL_HOURS: ${CYCLE_INTERVAL_HOURS:-2}
+      DRY_RUN: ${DRY_RUN:-0}
+    volumes:
+      - ./trade_history.json:/app/trade_history.json
+    restart: unless-stopped
