@@ -38,7 +38,7 @@ services:
     env_file:
       - .env
     environment:
-      CYCLE_INTERVAL_HOURS: ${CYCLE_INTERVAL_HOURS:-2}
+      CYCLE_INTERVAL_HOURS: ${CYCLE_INTERVAL_HOURS:-1}
       DRY_RUN: ${DRY_RUN:-0}
     volumes:
       - ./trade_history.json:/app/trade_history.json

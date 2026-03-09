@@ -188,20 +188,24 @@ def fetch_markets():
             parsed = _parse_market(m, label)
             if parsed is None:
                 continue
+            if float(m.get("volume24hr", 0)) < min_vol:
+                continue
+            if float(m.get("liquidity", 0)) < min_liq:
+                continue
             if slug:
                 seen_slugs.add(slug)
             result.append(parsed)
             added += 1
         return added
 
-    n_vol = _add_batch(_raw_fetch_markets("volume24hr", 60), "top-volume", 10)
+    n_vol = _add_batch(_raw_fetch_markets("volume24hr", 100), "top-volume", 20)
     print(f"  top-volume bucket: {n_vol} markets")
 
-    n_new = _add_batch(_raw_fetch_markets("startDate", 200), "new", 5, min_vol=0, min_liq=15_000)
+    n_new = _add_batch(_raw_fetch_markets("startDate", 300), "new", 10, min_vol=0, min_liq=5_000)
     print(f"  new bucket: {n_new} markets")
 
-    brk_raw = _raw_fetch_markets("oneDayPriceChange", 100)
-    n_brk = _add_batch(brk_raw, "breaking", 5, min_vol=5_000, min_liq=5_000) if brk_raw else 0
+    brk_raw = _raw_fetch_markets("oneDayPriceChange", 200)
+    n_brk = _add_batch(brk_raw, "breaking", 20, min_vol=1_000, min_liq=2_000) if brk_raw else 0
     print(f"  breaking bucket: {n_brk} markets")
 
     print(f"Fetched {len(result)} candidate markets ({n_vol} vol, {n_new} new, {n_brk} breaking)")

@@ -388,10 +388,31 @@ def run_cycle(state: TradeState, cycle_num: int, starting_balance: float) -> Non
         markets = fetch_markets()
         held = {p["token_id"] for p in positions}
         raw_candidates: list = []
+        top_evs: list = []
         for m in markets:
             recs = _analyse_market(m, balance, held)
             raw_candidates.extend(recs)
+            # Track best EV seen (even below threshold) for diagnostics
+            yes_price = float(m["prices"][0])
+            from bayesian_engine import MarketSignals, compute_posterior
+            from lsmr_engine import inefficiency_ev
+            vol_ratio = m["volume24h"] / max(MIN_VOLUME_24H, 1)
+            liq_ratio = m["liquidity"] / max(MIN_LIQUIDITY, 1)
+            sig = MarketSignals(
+                market_price=yes_price,
+                volume_ratio=vol_ratio,
+                price_change_1d=m.get("price_change_1d"),
+                days_to_expiry=None,
+                liquidity_ratio=liq_ratio,
+            )
+            p_hat, _ = compute_posterior(sig)
+            ev = inefficiency_ev(yes_price, p_hat)
+            top_evs.append((ev, m["question"][:50], yes_price, p_hat, m.get("price_change_1d", 0)))
+        top_evs.sort(key=lambda x: -x[0])
         print(f"  Bayesian analysis: {len(raw_candidates)} candidate signals found")
+        print(f"  Top EVs this cycle (threshold={MIN_EV}):")
+        for ev, q, p, ph, chg in top_evs[:5]:
+            print(f"    EV={ev:+.4f} p={p:.3f}→p̂={ph:.3f} Δ1d={chg:+.3f} | {q}")
         new_trades = _apply_constraints(raw_candidates, balance, len(positions))
         print(f"  After constraints: {len(new_trades)} trades to execute")
 
