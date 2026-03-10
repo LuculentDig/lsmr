@@ -40,7 +40,7 @@ def _patched_get_market_order_amounts(self, side, amount, price, round_config):
         raw_taker_amt = round_down(amount / raw_price, 2)
         raw_maker_amt = raw_taker_amt * raw_price
         if decimal_places(raw_maker_amt) > round_config.amount:
-            raw_maker_amt = round_up(raw_maker_amt, round_config.amount)
+            raw_maker_amt = round_down(raw_maker_amt, round_config.amount)
         return _UtilsBuy, to_token_decimals(raw_maker_amt), to_token_decimals(raw_taker_amt)
 
     elif side == SELL:
@@ -227,6 +227,39 @@ def get_balance():
         return 0.0
 
 
+def fetch_markets_for_tokens(token_ids: list) -> dict:
+    """Fetch live market data for a list of token IDs.
+
+    Returns a dict mapping token_id -> parsed market dict (same schema as
+    fetch_markets).  Used to re-run the Bayesian model on held positions.
+    """
+    if not token_ids:
+        return {}
+    try:
+        resp = requests.get(
+            "https://gamma-api.polymarket.com/markets",
+            params=[("clob_token_ids", str(t)) for t in token_ids],
+            timeout=30,
+        )
+        resp.raise_for_status()
+        raw = resp.json()
+    except requests.RequestException as e:
+        print(f"WARNING: fetch_markets_for_tokens failed: {e}")
+        return {}
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"WARNING: fetch_markets_for_tokens parse error: {e}")
+        return {}
+
+    result = {}
+    for m in raw:
+        parsed = _parse_market(m, "held")
+        if parsed is None:
+            continue
+        for tid in parsed["token_ids"]:
+            result[tid] = parsed
+    return result
+
+
 def fetch_positions():
     """Fetch current open positions from the data API."""
     if client is None:
@@ -253,14 +286,14 @@ def fetch_positions():
             if p.get("size", 0) <= 0:
                 continue
             result.append({
-                "market": p.get("market", ""),
+                "market": p.get("title", "") or p.get("market", ""),
                 "outcome": p.get("outcome", ""),
-                "token_id": p.get("tokenId", ""),
-                "size": float(p.get("size", 0)),
-                "avg_price": float(p.get("avgPrice", 0)),
-                "cur_price": float(p.get("currentPrice", 0)),
-                "pnl_pct": float(p.get("pnlPct", 0)),
-                "current_value": float(p.get("currentValue", 0)),
+                "token_id": p.get("asset", "") or p.get("tokenId", ""),
+                "size": float(p.get("size", 0) or 0),
+                "avg_price": float(p.get("avgPrice", 0) or 0),
+                "cur_price": float(p.get("curPrice", 0) or 0),
+                "pnl_pct": float(p.get("percentPnl", 0) or 0),
+                "current_value": float(p.get("currentValue", 0) or 0),
                 "end_date": p.get("endDate", ""),
             })
         except Exception as e:

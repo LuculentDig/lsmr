@@ -43,8 +43,8 @@ MAX_OPEN_POSITIONS   = 5
 # ---------------------------------------------------------------------------
 # Exit thresholds
 # ---------------------------------------------------------------------------
-STOP_LOSS_FRAC   = 0.45    # exit if cur_price < avg_price * STOP_LOSS_FRAC
-TAKE_PROFIT_FRAC = 0.85    # exit if cur_price >= TAKE_PROFIT_FRAC and PnL>=30%
+STOP_LOSS_FRAC      = 0.45   # exit if cur_price < avg_price * STOP_LOSS_FRAC
+EXIT_EV_THRESHOLD   = 0.0    # exit when Bayesian EV (p_hat - cur_price) drops to 0
 
 # ---------------------------------------------------------------------------
 # Loop schedule

@@ -35,6 +35,7 @@ from datetime import datetime, timezone
 from polymarket_sdk.api import (
     get_balance,
     fetch_markets,
+    fetch_markets_for_tokens,
     fetch_positions,
     execute_trades,
 )
@@ -51,7 +52,7 @@ from constants import (
     MIN_VOLUME_24H,
     MIN_LIQUIDITY,
     STOP_LOSS_FRAC,
-    TAKE_PROFIT_FRAC,
+    EXIT_EV_THRESHOLD,
     LSMR_B,
 )
 from state import TradeState
@@ -104,15 +105,17 @@ def _kelly_scale_for_expiry(days_to_expiry) -> float:
 # Exit signal detection
 # ---------------------------------------------------------------------------
 
-def _check_exits(positions: list) -> list:
+def _check_exits(positions: list, held_market_data: dict = None) -> list:
     """Return SELL recommendations for any positions that hit an exit rule.
 
     Exit rules:
       1. Stop-loss:        cur_price < avg_price * STOP_LOSS_FRAC
-      2. Take-profit:      cur_price >= TAKE_PROFIT_FRAC  AND  pnl_pct >= 30
-      3. Near-expiry cut:  days_left <= 3  AND  pnl_pct < -20
+      2. Near-expiry cut:  days_left <= 3  AND  pnl_pct < -20
+      3. EV-gap closed:    Bayesian p_hat - cur_price < EXIT_EV_THRESHOLD
+                           Same signal that triggered entry — exit when edge is gone.
     """
     exits = []
+    print(f"  Checking exits: {len(positions)} positions, market data fetched for {len(held_market_data or {})} tokens")
     for p in positions:
         cur   = p.get("cur_price", 0)
         avg   = p.get("avg_price", 0)
@@ -125,20 +128,43 @@ def _check_exits(positions: list) -> list:
 
         reason = None
 
+        # Rule 1: Stop-loss
         if cur < avg * STOP_LOSS_FRAC:
             reason = f"STOP-LOSS: cur={cur:.3f} < {avg * STOP_LOSS_FRAC:.3f}"
-        elif cur >= TAKE_PROFIT_FRAC and pnl_p >= 30:
-            reason = f"TAKE-PROFIT: cur={cur:.3f} >= {TAKE_PROFIT_FRAC}, PnL={pnl_p:+.1f}%"
         else:
+            # Compute days_to_expiry for rules 2 and 3
+            days_to_expiry = None
             end_date = p.get("end_date", "")
             if end_date:
                 try:
                     end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
-                    days_left = (end_dt - datetime.now(timezone.utc)).days
-                    if days_left <= 3 and pnl_p < -20:
-                        reason = f"NEAR-EXPIRY-CUT: {days_left}d left, PnL={pnl_p:+.1f}%"
+                    days_to_expiry = max(0.0, (end_dt - datetime.now(timezone.utc)).total_seconds() / 86400)
                 except Exception:
                     pass
+
+            # Rule 2: Near-expiry cut
+            if days_to_expiry is not None and days_to_expiry <= 3 and pnl_p < -20:
+                reason = f"NEAR-EXPIRY-CUT: {days_to_expiry:.0f}d left, PnL={pnl_p:+.1f}%"
+
+            # Rule 3: EV-gap closed — re-run Bayesian model on current price
+            if reason is None:
+                mkt = (held_market_data or {}).get(token)
+                vol_ratio  = mkt["volume24h"] / max(MIN_VOLUME_24H, 1) if mkt else None
+                liq_ratio  = mkt["liquidity"] / max(MIN_LIQUIDITY, 1)  if mkt else None
+                price_chg  = mkt.get("price_change_1d")                if mkt else None
+                sig = MarketSignals(
+                    market_price    = cur,
+                    volume_ratio    = vol_ratio,
+                    price_change_1d = price_chg,
+                    days_to_expiry  = days_to_expiry,
+                    liquidity_ratio = liq_ratio,
+                )
+                p_hat, _ = compute_posterior(sig)
+                ev = p_hat - cur
+                signals_label = "full" if mkt else "price+expiry only"
+                print(f"    {p.get('market','?')[:45]} | p={cur:.3f} p̂={p_hat:.3f} ev={ev:+.3f} [{signals_label}]")
+                if ev < EXIT_EV_THRESHOLD:
+                    reason = f"EV-GAP-CLOSED: ev={ev:+.3f}, p={cur:.3f} p̂={p_hat:.3f}"
 
         if reason:
             exits.append({
@@ -369,8 +395,10 @@ def run_cycle(state: TradeState, cycle_num: int, starting_balance: float) -> Non
     positions = fetch_positions()
     print(f"  Balance: ${balance:.2f}  |  Open positions: {len(positions)}")
 
-    # 2. Exit signals
-    exits = _check_exits(positions)
+    # 2. Exit signals — fetch live market data for held positions to re-run EV model
+    held_token_ids = [p["token_id"] for p in positions]
+    held_market_data = fetch_markets_for_tokens(held_token_ids) if held_token_ids else {}
+    exits = _check_exits(positions, held_market_data)
 
     # 3. New trade analysis
     emergency_stop   = max(starting_balance * EMERGENCY_STOP_FRACTION, MIN_TRADE_AMOUNT)
@@ -432,9 +460,10 @@ def run_cycle(state: TradeState, cycle_num: int, starting_balance: float) -> Non
     state.record_cycle(cycle_num, balance, new_trades, results, skipped)
 
     # 6. Telegram
+    executed_trades = [r for r in new_trades if r.get("token_id") in executed_ids]
     if all_recs or cycle_num % 8 == 0:   # always notify every 8 cycles
         try:
-            msg = _fmt_cycle_msg(cycle_num, balance, positions, exits, new_trades)
+            msg = _fmt_cycle_msg(cycle_num, balance, positions, exits, executed_trades)
             send_telegram(msg)
         except Exception as e:
             print(f"WARNING: Telegram notification failed: {e}")
